@@ -1,269 +1,242 @@
-from flask import Flask
+from flask import Flask, render_template, request, jsonify, session
 import os
 import logging
-from flask import Flask, jsonify, request, render_template
 from pypdf import PdfReader
 from werkzeug.utils import secure_filename
 import google.generativeai as genai
 import yaml
 import json
 from flask_cors import CORS
+from dotenv import load_dotenv
 
+# Initialize environment and logging
+load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
 # Configure paths
 UPLOAD_PATH = os.path.join(os.getcwd(), "__DATA__")
 os.makedirs(UPLOAD_PATH, exist_ok=True)
 
-# Load API key from configuration file
-# CONFIG_PATH = r"config.yaml"
-# with open(CONFIG_PATH) as file:
-#     data = yaml.load(file, Loader=yaml.FullLoader)
-
-api_key = 'AIzaSyDz7gvit1UcwBuYRX7L7iVcfmRdeaNrMZ4'
-
-# Configure the Gemini API client
-genai.configure(api_key=api_key)
-
+# Configure Gemini API
+genai.configure(api_key='AIzaSyDz7gvit1UcwBuYRX7L7iVcfmRdeaNrMZ4')  # Main API key
 
 app = Flask(__name__, template_folder="templates")
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-# Define raw_text globally
+app.secret_key = os.urandom(24)  # Required for session management
+
+# Global variable for resume text
 raw_text = ""
 
+class AITextDetector:
+    """Class for detecting AI-generated text using Gemini"""
+    def __init__(self):
+        self.model = genai.GenerativeModel('gemini-pro')
+        self.safety_settings = {
+            'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+            'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+            'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+            'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE'
+        }
+
+    def detect(self, text):
+        """Analyze text for AI generation patterns"""
+        try:
+            if len(text) < 100:
+                return {"error": "Text must be at least 100 characters"}
+
+            prompt = f"""Analyze this text for AI-generation indicators. Return JSON response:
+            {{
+                "verdict": "AI-generated" or "Human-written",
+                "confidence": 0-100,
+                "reason": "short explanation"
+            }}
+            Text: {text}"""
+
+            response = self.model.generate_content(
+                prompt,
+                safety_settings=self.safety_settings
+            )
+
+            try:
+                return json.loads(response.text.replace('```json', '').replace('```', '').strip())
+            except:
+                return {"error": "Failed to parse analysis response"}
+
+        except Exception as e:
+            return {"error": f"API Error: {str(e)}"}
+
+# --------------------------
+# Resume Processing Routes
+# --------------------------
 
 @app.route('/')
 def index():
-    """Upload PDF page."""
     return render_template('index.html')
 
 @app.route('/process', methods=["POST"])
 def process_resume():
-    """Extract text from PDF and render form.html with extracted data."""
     global raw_text
     try:
         if 'pdf_doc' not in request.files:
-            return "Error: No file uploaded", 400
+            return "No file uploaded", 400
 
         doc = request.files['pdf_doc']
         if not doc.filename.endswith('.pdf'):
-            return "Error: Only PDF files are allowed", 400
+            return "Only PDF files allowed", 400
 
-        # Extract text from PDF
         raw_text = _read_file_from_memory(doc)
         if not raw_text:
-            logging.error("No text extracted from PDF.")
-            return "Error: No text extracted from PDF", 400
-        # session["text"] = raw_text
-        # Get structured JSON from Gemini
+            return "No text extracted", 400
+
         parsed_json_string = ats_extractor(raw_text)
         if not parsed_json_string:
-            logging.error("Gemini parsing failed.")
-            return "Error: Failed to parse the resume.", 500
+            return "Parsing failed", 500
 
-        logging.info(f"Raw JSON from Gemini:\n{parsed_json_string}")
-
-        # Pass JSON data to form.html for user editing
         return render_template("form.html", json_data=parsed_json_string)
 
     except Exception as e:
-        logging.error(f"Error during processing: {e}")
-        return "An unexpected error occurred.", 500
+        logging.error(f"Processing error: {e}")
+        return "Server error", 500
 
 @app.route('/submit', methods=["POST"])
 def submit_details():
-    """Handle the final form submission and redirect to ATS evaluation page."""
     try:
         submitted_data = request.form.to_dict()
-        logging.info(f"User-submitted details: {submitted_data}")
-
         resume_json = json.dumps(submitted_data)
-
-        # Render ATS evaluation form (ats.html)
         return render_template('ats.html', resume_json=resume_json)
-
     except Exception as e:
-        logging.error(f"Error during submission: {e}")
-        return "An unexpected error occurred.", 500
+        logging.error(f"Submission error: {e}")
+        return "Server error", 500
 
 @app.route('/ats', methods=["POST"])
 def ats_score():
-    """Compute ATS score and render ats_result.html."""
     try:
         resume_json = request.form.get('resume_json')
         job_description = request.form.get('job_description')
 
-        if not resume_json or not job_description:
-            return "Error: Missing resume data or job description.", 400
-
-        # Compute ATS score
         ats_result_raw = ats_score_extractor(resume_json, job_description)
         if not ats_result_raw:
-            return "Error: Failed to compute ATS score.", 500
+            return "ATS calculation failed", 500
 
-        try:
-            ats_result_data = json.loads(ats_result_raw)
-            ats_result_data["resume_json"] = json.loads(resume_json)  # Ensure it's always included
-        except Exception as e:
-            logging.error(f"Error parsing ATS result JSON: {e}")
-            return "Error: Invalid ATS result format.", 500
-
-        # Render ATS results page
+        ats_result_data = json.loads(ats_result_raw)
+        ats_result_data["resume_json"] = json.loads(resume_json)
         return render_template("ats_result.html", ats_result=ats_result_data)
 
     except Exception as e:
-        logging.error(f"Error in ATS evaluation: {e}")
-        return "An unexpected error occurred.", 500
+        logging.error(f"ATS error: {e}")
+        return "Server error", 500
     
 @app.route('/generate_resume_html', methods=["POST"])
 def generate_resume_html_endpoint():
-    """
-    Generate the final resume HTML using the candidate's resume JSON and
-    additional missing skills from ATS.
-    """
     global raw_text
     try:
         data = request.form.to_dict()
-        if not data:
-            return "Error: No data provided.", 400
-        
         resume_json = json.loads(data.get("resume_json", "{}"))
         missing_skills = json.loads(data.get("missing_skills", "[]"))
-        # raw_text = session.get("text")
-
-        # Generate the resume content using Gemini AI
-        resume_html = generate_resume_with_gemini(raw_text,resume_json, missing_skills)
-        if not resume_html:
-            return "Error: Failed to generate resume HTML.", 500
-
-        return resume_html  # Directly return the generated resume HTML
+        
+        resume_html = generate_resume_with_gemini(raw_text, resume_json, missing_skills)
+        return resume_html if resume_html else "Generation failed", 500
 
     except Exception as e:
-        logging.error(f"Error generating resume HTML: {e}")
-        return "An unexpected error occurred.", 500
+        logging.error(f"Resume HTML error: {e}")
+        return "Server error", 500
 
+# --------------------------
+# Cover Letter Routes
+# --------------------------
 
-def generate_resume_with_gemini(raw_text2, resume_json, missing_skills):
-    """
-    Uses Gemini AI to fill the resume template with the candidate's data,
-    integrates missing skills into the Technical Skills section, and utilizes
-    the raw resume text to enhance the final HTML resume.
-    """
-    prompt = f"""
-    You are an AI assistant that generates professional resumes. Given the structured resume JSON, 
-    missing skills, and raw resume text, format the information into a complete, well-structured HTML resume.
+@app.route('/cover_letter')
+def cover_letter_form():
+    return render_template('cover_letter.html')
 
-    Resume Data (Structured JSON):
-    {json.dumps(resume_json, indent=2)}
-
-    Missing Skills:
-    {json.dumps(missing_skills, indent=2)}
-
-    Raw Resume Text (for reference):
-    {raw_text2}
-
-    Use the following HTML template and fill in the placeholders accurately.
-    Ensure the "Technical Skills" section includes both the candidate's existing skills and the missing skills.
-    Maintain a professional format.
-
-    Template:
-    {open("templates/generate_resume_html.html").read()}
-    """
-
+@app.route('/generate_cover_letter', methods=['POST'])
+def generate_cover_letter():
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt, stream=True)
-        resume_html = "".join(chunk.text for chunk in response)
+        form_data = {
+            'full_name': request.form['full_name'],
+            'email': request.form['email'],
+            'company_name': request.form['company_name'],
+            'hiring_manager': request.form['hiring_manager'],
+            'position': request.form['position'],
+            'content': request.form['content']
+        }
 
-        return resume_html.replace("```html", "").replace("```", "").strip()
+        detector = AITextDetector()
+        result = detector.detect(form_data['content'])
 
+        if 'error' in result:
+            return render_template('error.html', message=result['error'])
+
+        return render_template('cover_letter_analysis.html',
+                             analysis=result,
+                             **form_data)
     except Exception as e:
-        logging.error(f"Error in generate_resume_with_gemini: {e}")
-        return None
+        logging.error(f"Cover letter error: {e}")
+        return "Server error", 500
 
-
-
+# --------------------------
+# Helper Functions
+# --------------------------
 
 def _read_file_from_memory(file):
-    """Reads and extracts text from an in-memory PDF file."""
     try:
         reader = PdfReader(file)
-        data = ""
-        for page_no in range(min(5, len(reader.pages))):  # Limit pages to save memory
-            data += reader.pages[page_no].extract_text() or ""
-        logging.info(f"Extracted Text (first 200 chars): {data[:200]}")
-        return data
+        return " ".join(page.extract_text() for page in reader.pages[:5])
     except Exception as e:
-        logging.error(f"Error reading PDF: {e}")
+        logging.error(f"PDF read error: {e}")
         return ""
 
 def ats_extractor(resume_data):
-    """Extracts structured JSON from resume text using Gemini API."""
-    resume_data = resume_data.replace("%", "%%")  # Escape "%" to prevent format errors
-
-    prompt = f"""
-    You are an AI bot designed to parse resumes. Given the resume text provided below, extract key details and return them as valid JSON:
-
-    {{
-        "full_name": "",
-        "email": "",
-        "github": "",
-        "linkedin": "",
-        "employment": "",
-        "technical_skills": [],
-        "phone": "",
-        "address": "",
-        "profile": ""
-    }}
-
-    Ensure correct extraction with no extra text.
-
-    Resume:
-    {resume_data}
-    """
-
     try:
+        prompt = f"""Extract resume details as JSON:
+        {{
+            "full_name": "",
+            "email": "",
+            "github": "",
+            "linkedin": "",
+            "employment": "",
+            "technical_skills": [],
+            "phone": "",
+            "address": "",
+            "profile": ""
+        }}
+        Resume: {resume_data}"""
+
         model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt, stream=True)
-        raw_result = "".join(chunk.text for chunk in response)
-
-        if not raw_result.strip():
-            logging.error("Error: Gemini response is empty.")
-            return None
-
-        return raw_result.replace("```json", "").replace("```", "").strip()
-
+        return model.generate_content(prompt).text.replace("```json", "").replace("```", "").strip()
     except Exception as e:
-        logging.error(f"Error in ats_extractor: {e}")
+        logging.error(f"ATS extract error: {e}")
         return None
 
 def ats_score_extractor(resume_json, job_description):
-    """Computes ATS score by comparing resume JSON with job description."""
-    prompt = f"""
-    Compare the resume JSON below with the job description and calculate an ATS score (0-100). Also, list missing skills.
-
-    Resume JSON:
-    {resume_json}
-
-    Job Description:
-    {job_description}
-
-    Return only JSON in this format:
-    {{
-        "ats_score": 0,
-        "missing_skills": []
-    }}
-    """
-
     try:
+        prompt = f"""Compare resume with job description and return JSON:
+        {{
+            "ats_score": 0-100,
+            "missing_skills": []
+        }}
+        Resume: {resume_json}
+        JD: {job_description}"""
+
         model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt, stream=True)
-        raw_result = "".join(chunk.text for chunk in response)
-
-        return raw_result.replace("```json", "").replace("```", "").strip()
-
+        return model.generate_content(prompt).text.replace("```json", "").replace("```", "").strip()
     except Exception as e:
-        logging.error(f"Error in ats_score_extractor: {e}")
+        logging.error(f"ATS score error: {e}")
+        return None
+
+def generate_resume_with_gemini(raw_text, resume_json, missing_skills):
+    try:
+        prompt = f"""Generate resume HTML using:
+        JSON: {json.dumps(resume_json)}
+        Missing skills: {missing_skills}
+        Raw text: {raw_text}
+        Template: {open("templates/generate_resume_html.html").read()}"""
+
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        return response.text.replace("```html", "").replace("```", "").strip()
+    except Exception as e:
+        logging.error(f"Resume gen error: {e}")
         return None
 
 if __name__ == "__main__":
