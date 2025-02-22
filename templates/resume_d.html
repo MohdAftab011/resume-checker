@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Resume - James Madison</title>
+  <style>
+    :root {
+      --primary: #2B3467;
+      --secondary: #BAD7E9;
+      --accent: #EB455F;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f7f7f7;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: var(--primary);
+      padding: 2.5rem;
+      color: white;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      letter-spacing: 1px;
+    }
+
+    .contact-info {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .contact-item svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 2rem;
+      padding: 2.5rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      color: var(--primary);
+      border-bottom: 3px solid var(--accent);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 1.3rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .experience-item {
+      margin-bottom: 1.5rem;
+    }
+
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .experience-title {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .experience-date {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .experience-location {
+      color: var(--accent);
+      font-style: italic;
+      margin-bottom: 0.5rem;
+    }
+
+    .highlight-list {
+      list-style: none;
+      padding-left: 1.2rem;
+    }
+
+    .highlight-list li::before {
+      content: "•";
+      color: var(--accent);
+      display: inline-block;
+      width: 1em;
+      margin-left: -1em;
+    }
+
+    .sidebar {
+      border-left: 3px solid var(--secondary);
+      padding-left: 2rem;
+    }
+
+    .skill-item {
+      margin-bottom: 0.8rem;
+    }
+
+    .skill-category {
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+      }
+      
+      .sidebar {
+        border-left: none;
+        padding-left: 0;
+      }
+    }
+  </style>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Assign an id to the container for PDF conversion -->
+  <div class="container" id="resume-content">
+    <div class="header">
+      <h1>James Madison</h1>
+      <div class="contact-info">
+        <div class="contact-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Springfield, VA</span>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-phone"></i>
+          <span>(703) 555-5555</span>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <span>j.madison@email.com</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="main-column">
+        <div class="section">
+          <h2 class="section-title">Professional Summary</h2>
+          <p>Dynamic event planning professional with 5+ years of experience organizing successful large-scale events and managing teams. Proven track record in budget management and fundraising initiatives.</p>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Professional Experience</h2>
+          <div class="experience-item">
+            <div class="experience-header">
+              <div>
+                <div class="experience-title">Hall Director</div>
+                <div class="experience-location">James Madison University</div>
+              </div>
+              <div class="experience-date">2019 - Present</div>
+            </div>
+            <ul class="highlight-list">
+              <li>Managed $1,000+ budget for programming large events</li>
+              <li>Supervised staff of 6 RAs and 220 first-year students</li>
+              <li>Coordinated 28+ hall activities annually</li>
+            </ul>
+          </div>
+          <!-- Add more experience items as needed -->
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="section">
+          <h2 class="section-title">Education</h2>
+          <div class="experience-item">
+            <div class="experience-title">B.A. Philosophy & Religion</div>
+            <div class="experience-location">James Madison University</div>
+            <div class="experience-date">2003 - 2007</div>
+            <ul class="highlight-list">
+              <li>Cumulative GPA: 3.65/4.0</li>
+              <li>Dean's List (4 semesters)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Key Skills</h2>
+          <div class="skill-item">
+            <div class="skill-category">Event Planning</div>
+            <ul class="highlight-list">
+              <li>Budget Management</li>
+              <li>Vendor Coordination</li>
+              <li>Logistics Planning</li>
+            </ul>
+          </div>
+          <!-- Add more skill categories as needed -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF Download Button -->
+  <div style="text-align:center; margin-top: 20px;">
+    <button id="download-pdf">Download PDF</button>
+  </div>
+
+  <!-- Include jsPDF from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  document.getElementById('download-pdf').addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    
+    // Use US Letter size (612 x 792 points) in portrait orientation
+    const doc = new jsPDF('p', 'pt', 'letter');
+
+    doc.html(document.getElementById('resume-content'), {
+      callback: function (doc) {
+        doc.save('James_Madison_Resume.pdf');
+      },
+      x: 40,
+      y: 40,
+      // Fill nearly the entire width of the Letter page
+      width: doc.internal.pageSize.getWidth() - 80,
+      // Trick jsPDF into thinking the browser window is 900px wide for layout
+      windowWidth: 900
+    });
+  });
+</script>
+
+</body>
+</html>

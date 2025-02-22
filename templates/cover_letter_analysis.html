@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cover Letter Analysis</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --light-gray: #ecf0f1;
+            --text-color: #2c3e50;
+        }
+    
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+    
+        .result-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 2rem 0;
+            border-left: 4px solid var(--secondary-color);
+            transition: transform 0.2s ease;
+        }
+    
+        .result-section:hover {
+            transform: translateY(-2px);
+        }
+    
+        h3 {
+            color: var(--primary-color);
+            margin: 0 0 1.5rem 0;
+            font-size: 1.5rem;
+            position: relative;
+            padding-left: 1.75rem;
+        }
+    
+        h3::before {
+            content: '🔍';
+            position: absolute;
+            left: 0;
+            top: -0.1rem;
+            font-size: 1.2rem;
+        }
+    
+        .detection-result {
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--light-gray);
+            margin: 1rem 0;
+        }
+    
+        .detection-result::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>');
+        }
+    
+        .confidence-percentage {
+            font-size: 1.25rem;
+            color: var(--text-color);
+            background: var(--light-gray);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+    
+        .content-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid #dfe6e9;
+            position: relative;
+            overflow: hidden;
+        }
+    
+        .content-box::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--secondary-color);
+        }
+    
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .result-section {
+                padding: 1.5rem;
+                margin: 1rem 0;
+            }
+            
+            h3 {
+                font-size: 1.3rem;
+            }
+        }
+    
+        /* Animation for detection result */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+    
+        .detection-result {
+            animation: pulse 1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-section">
+        <h3>AI Detection Result:</h3>
+        <p class="detection-result">
+            AI Written Data ({{ analysis.confidence }}% confidence)
+        </p>
+    </div>
+</body>
+</html>

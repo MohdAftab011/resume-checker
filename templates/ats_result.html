@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>ATS Score Result</title>
+</head>
+<body class="bg-gray-900 p-8 text-white flex justify-center items-center min-h-screen">
+
+  <div class="max-w-2xl w-full bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h1 class="text-3xl font-bold text-blue-400 text-center mb-4">ATS Score Result</h1>
+    
+    <!-- Score Section -->
+    <div id="result" class="space-y-4 p-4 bg-gray-700 rounded-lg">
+      <p class="text-xl text-center">ATS Score: <span class="font-bold text-yellow-400">{{ ats_result.ats_score }}</span></p>
+      
+      <h2 class="text-lg font-semibold">Missing Skills/Qualifications:</h2>
+      {% if ats_result.missing_skills %}
+        <ul class="list-disc pl-5 space-y-1 text-red-300">
+          {% for skill in ats_result.missing_skills %}
+            <li>{{ skill }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-green-400">✅ None – your resume meets all requirements!</p>
+      {% endif %}
+    </div>
+
+    <!-- Form to Generate Resume -->
+    <form id="generateResumeForm" action="/generate_resume_html" method="post" class="mt-6 flex flex-col items-center">
+      <input type="hidden" name="missing_skills" value='{{ ats_result.missing_skills | tojson | safe }}'>
+
+      <!-- Loader (Hidden Initially) -->
+      <div id="loader" class="hidden flex items-center gap-2 text-blue-300">
+        <div class="animate-spin rounded-full h-6 w-6 border-t-4 border-blue-500"></div>
+        Generating Resume...
+      </div>
+
+      <!-- Submit Button -->
+      <button id="submitBtn" type="submit"
+        class="mt-4 bg-blue-500 px-6 py-2 rounded-lg text-white font-semibold hover:bg-blue-400 transition">
+        Generate Full Resume with AI
+      </button>
+
+      <!-- Success Message (Hidden Initially) -->
+      <p id="successMessage" class="hidden mt-3 text-green-400 font-medium">
+        ✅ Resume Generated Successfully!
+      </p>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("generateResumeForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const loader = document.getElementById("loader");
+    const successMessage = document.getElementById("successMessage");
+
+    form.addEventListener("submit", (event) => {
+      submitBtn.classList.add("hidden"); // Hide Button
+      loader.classList.remove("hidden"); // Show Loader
+
+      // Simulating a short delay before success message
+      setTimeout(() => {
+        loader.classList.add("hidden"); // Hide Loader
+        successMessage.classList.remove("hidden"); // Show Success Message
+      }, 2000);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Resume Details</title>
+</head>
+<body class="bg-gray-900 p-8 text-white">
+
+  <div class="max-w-2xl mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
+    <h1 class="text-3xl font-bold mb-4 text-center text-blue-400">Resume Details</h1>
+
+    <!-- Resume Form -->
+    <form id="resumeForm" action="/submit" method="post" class="space-y-6">
+      <!-- Dynamic content will be injected here -->
+      
+      <!-- Submit Button -->
+      <div class="flex justify-center mt-6">
+        <button id="submitBtn" type="submit"
+          class="bg7-blue-500 px-6 py-2 rounded-lg text-white font-semibold hover:bg-blue-400 transition">
+          Submit Details
+        </button>
+      </div>
+
+      <!-- Loader (Hidden by Default) -->
+      <div id="loader" class="hidden flex justify-center mt-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-t-4 border-blue-400"></div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Raw JSON string from backend
+    const rawJsonString = `{{ json_data|safe }}`;
+    const form = document.getElementById('resumeForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loader = document.getElementById('loader');
+
+    try {
+      const data = JSON.parse(rawJsonString);
+
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        const div = document.createElement('div');
+
+        const label = document.createElement('label');
+        label.className = 'block text-sm font-medium text-gray-200 mb-1';
+        label.textContent = key.replace(/_/g, " ").toUpperCase();
+        div.appendChild(label);
+
+        if (key === "employment" && Array.isArray(value)) {
+          value.forEach((job, index) => {
+            const jobDiv = document.createElement('div');
+            jobDiv.className = 'mt-2 p-3 border border-gray-600 rounded-lg bg-gray-700';
+
+            Object.keys(job).forEach(jobKey => {
+              const jobLabel = document.createElement('label');
+              jobLabel.className = 'block text-xs text-gray-400';
+              jobLabel.textContent = jobKey.replace(/_/g, " ").toUpperCase();
+              jobDiv.appendChild(jobLabel);
+
+              const jobInput = document.createElement('input');
+              jobInput.type = 'text';
+              jobInput.name = `${key}[${index}][${jobKey}]`;
+              jobInput.value = job[jobKey];
+              jobInput.className = 'mt-1 block w-full rounded-md bg-gray-600 text-white p-2 border border-gray-500';
+              jobDiv.appendChild(jobInput);
+            });
+
+            div.appendChild(jobDiv);
+          });
+
+        } else if (key === "technical_skills" && Array.isArray(value)) {
+          // Display skills as tags
+          const skillsDiv = document.createElement('div');
+          skillsDiv.className = "flex flex-wrap gap-2 mt-2";
+          
+          value.forEach(skill => {
+            const skillTag = document.createElement('span');
+            skillTag.className = "bg-blue-500 text-white px-3 py-1 rounded-lg text-sm";
+            skillTag.textContent = skill;
+            skillsDiv.appendChild(skillTag);
+          });
+
+          div.appendChild(skillsDiv);
+
+        } else {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.name = key;
+          input.value = (typeof value === 'string') ? value : JSON.stringify(value);
+          input.className = 'mt-1 block w-full rounded-md bg-gray-600 text-white p-2 border border-gray-500';
+          div.appendChild(input);
+        }
+
+        form.insertBefore(div, submitBtn.parentNode); // Insert above submit button
+      });
+
+    } catch (err) {
+      console.error("Failed to parse JSON. Error:", err);
+      const errorMsg = document.createElement('p');
+      errorMsg.className = 'text-red-400 text-center';
+      errorMsg.textContent = 'Error: Unable to parse JSON data.';
+      form.insertBefore(errorMsg, submitBtn.parentNode);
+    }
+
+    // Show Loader on Submit
+    form.addEventListener('submit', () => {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+      loader.classList.remove('hidden');
+    });
+
+  </script>
+
+</body>
+</html>
+
+
+

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume - {{ full_name }}</title>
+  <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 40px auto;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f8f9fa;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 50px;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+        color: #2c3e50;
+        font-size: 32px;
+        margin-bottom: 5px;
+    }
+
+    h2 {
+        color: #2c3e50;
+        font-size: 20px;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 6px;
+        margin: 30px 0 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .contact-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        font-size: 0.95em;
+        color: #666;
+    }
+
+    .contact-info a {
+        color: #3498db;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .contact-info a:hover {
+        color: #2980b9;
+    }
+
+    .section-item {
+        margin-bottom: 25px;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .section-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .section-subtitle {
+        color: #666;
+        font-style: italic;
+    }
+
+    .section-date {
+        color: #7f8c8d;
+        font-size: 0.9em;
+    }
+
+    ul {
+        padding-left: 20px;
+        margin: 10px 0;
+    }
+
+    ul li {
+        margin-bottom: 8px;
+        position: relative;
+    }
+
+    ul li:before {
+        content: "•";
+        color: #3498db;
+        position: absolute;
+        left: -15px;
+    }
+
+    .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .skill-category {
+        margin-bottom: 15px;
+    }
+
+    .skill-category h3 {
+        margin: 0 0 8px 0;
+        font-size: 0.95em;
+        color: #7f8c8d;
+    }
+
+    .skill-items {
+        font-size: 0.9em;
+        color: #444;
+    }
+
+    .project-link {
+        font-size: 0.9em;
+        margin-left: 10px;
+    }
+
+    #download-pdf {
+        background-color: #3498db;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
+
+    #download-pdf:hover {
+        background-color: #2980b9;
+    }
+
+    @media print {
+        body {
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        .container {
+            box-shadow: none;
+            padding: 20px;
+        }
+
+        #download-pdf {
+            display: none;
+        }
+    }
+</style>
+</head>
+<body>
+  <!-- Container for Resume Content -->
+  <div class="container" id="resume-content">
+    <h1>{{ full_name }}</h1>
+    <p>{{ location }}</p>
+    <p>{{ email }} | {{ phone }}</p>
+    <p>
+      <a href="{{ linkedin }}">LinkedIn</a> |
+      <a href="{{ github }}">GitHub</a> |
+      <a href="{{ leetcode }}">LeetCode</a>
+    </p>
+
+    <div class="section education">
+      <h2>Education</h2>
+      <ul>
+        {% for edu in education %}
+          <li><strong>{{ edu }}</strong></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section skills">
+      <h2>Technical Skills</h2>
+      <ul>
+        <li><strong>Core Skills:</strong> {{ core_skills }}</li>
+        <li><strong>Databases:</strong> {{ databases }}</li>
+        <li><strong>Machine Learning:</strong> {{ machine_learning }}</li>
+        <li><strong>Soft Skills:</strong> {{ soft_skills }}</li>
+        <li><strong>Additional Skills:</strong> {{ missing_skills|join(", ") }}</li>
+      </ul>
+    </div>
+
+    <div class="section experience">
+      <h2>Experience</h2>
+      <ul>
+        {% for exp in experience %}
+          <li>
+            <strong>{{ exp.title }}</strong> ({{ exp.date }})
+            <ul>
+              {% for detail in exp.details %}
+                <li>{{ detail }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section projects">
+      <h2>Notable Projects</h2>
+      <ul>
+        {% for project in projects %}
+          <li>
+            <strong>{{ project.name }} 
+              [<a href="{{ project.link }}">GitHub</a>]
+            </strong>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section activities">
+      <h2>Leadership & Extracurricular Activities</h2>
+      <ul>
+        {% for activity in activities %}
+          <li><strong>{{ activity.title }}:</strong> {{ activity.details }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- PDF Download Button -->
+  <div style="text-align:center; margin-top: 20px;">
+    <button id="download-pdf">Download PDF</button>
+  </div>
+
+  <!-- Include jsPDF (and html2canvas) from CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    document.getElementById('download-pdf').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      // Create a new jsPDF doc, Letter size in points (612 x 792)
+      const doc = new jsPDF('p', 'pt', 'letter');
+
+      doc.html(document.getElementById('resume-content'), {
+        callback: function (doc) {
+          doc.save('resume.pdf');
+        },
+        x: 40,
+        y: 40,
+        // Fill nearly the entire width of the Letter page
+        width: doc.internal.pageSize.getWidth() - 80,
+        // Trick jsPDF into thinking the browser window is ~900px wide
+        windowWidth: 900
+      });
+    });
+  </script>
+</body>
+</html>
